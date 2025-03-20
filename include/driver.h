@@ -29,4 +29,6 @@ public:
     void set_sequence(const register_size *bit_sequence, int len, bool repeat);
 
     bool has_sequence();
+
+    int get_current_index() {return current_index;}
 };
