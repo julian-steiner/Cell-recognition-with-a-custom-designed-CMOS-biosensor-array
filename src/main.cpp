@@ -73,7 +73,7 @@ void setup()
   seq = sequence_generator::get_custom_spi_data_signal(13, 127, sequence_generator::COL_READ_DATA, sequence_generator::ROW_READ_DATA);
   spi_driver.set_sequence(seq.data(), seq.size(), true);
 
-  analog::analog_setup(16);
+  analog_instance.analog_setup(16);
 }
 
 void loop()

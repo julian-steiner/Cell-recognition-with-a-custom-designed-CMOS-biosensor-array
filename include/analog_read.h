@@ -15,4 +15,4 @@ public:
     //currently only sets up pin A0.
     void analog_setup(int res);
     double read_value();
-}
+};
