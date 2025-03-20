@@ -1,5 +1,7 @@
 #pragma once
 
+// TODO : FIGURE OUT WHY THERE ARE 7 ZEROS
+
 #include <array>
 #include <bitset>
 
@@ -28,10 +30,10 @@ namespace sequence_generator
     const size_t LATCH_SIGNAL_SIZE = 14;
 
     // Data signals
-    const u_int8_t ROW_RESET_DATA = 0b010000;
-    const u_int8_t ROW_READ_DATA = 0b010001;
-    const u_int8_t COL_RESET_DATA = 0b000010;
-    const u_int8_t COL_READ_DATA = 0b001010;
+    const u_int8_t ROW_RESET_DATA = 0b000010;
+    const u_int8_t ROW_READ_DATA = 0b100010;
+    const u_int8_t COL_RESET_DATA = 0b010000;
+    const u_int8_t COL_READ_DATA = 0b010100;
 
     // Precoded signals
     // SPI Signals

@@ -23,15 +23,8 @@ std::array<register_size, 62> sequence_generator::get_custom_spi_data_signal(con
     std::bitset<data_size> row_data_bits;
 
     // Generate address bitmasks
-    // Write addr to bitset and flip the bits
-    std::bitset<7> col_address_bits = std::bitset<7>(col_addr);
-    bitset_utils::flip_bitset<7>(col_address_bits);
-    std::bitset<data_size> col_address_bitmask = bitset_utils::extend_bitset<7, data_size>(col_address_bits) << addr_start;
-
-    // Write addr to bitset and flip the bits
-    std::bitset<7> row_address_bits = std::bitset<7>(row_addr);
-    bitset_utils::flip_bitset<7>(row_address_bits);
-    std::bitset<data_size> row_address_bitmask = bitset_utils::extend_bitset<7, data_size>(row_address_bits) << addr_start;
+    std::bitset<data_size> col_address_bitmask = std::bitset<data_size>(col_address_bitmask) << addr_start;
+    std::bitset<data_size> row_address_bitmask = std::bitset<data_size>(row_address_bitmask) << addr_start;
 
     // Generate data bitmask
     std::bitset<data_size> row_data_bitmask = std::bitset<data_size>(row_data) << data_start;
