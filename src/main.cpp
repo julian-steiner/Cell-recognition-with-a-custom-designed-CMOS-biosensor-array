@@ -72,6 +72,8 @@ void setup()
   // spi_driver.set_sequence(&sequence_generator::RESET_SIGNAL[0], sequence_generator::RESET_SIGNAL_SIZE);
   seq = sequence_generator::get_custom_spi_data_signal(13, 127, sequence_generator::COL_READ_DATA, sequence_generator::ROW_READ_DATA);
   spi_driver.set_sequence(seq.data(), seq.size(), true);
+
+  analog::analog_setup(16);
 }
 
 void loop()
