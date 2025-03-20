@@ -23,8 +23,8 @@ std::array<register_size, 62> sequence_generator::get_custom_spi_data_signal(con
     std::bitset<data_size> row_data_bits;
 
     // Generate address bitmasks
-    std::bitset<data_size> col_address_bitmask = std::bitset<data_size>(col_address_bitmask) << addr_start;
-    std::bitset<data_size> row_address_bitmask = std::bitset<data_size>(row_address_bitmask) << addr_start;
+    std::bitset<data_size> col_address_bitmask = std::bitset<data_size>(col_addr) << addr_start;
+    std::bitset<data_size> row_address_bitmask = std::bitset<data_size>(row_addr) << addr_start;
 
     // Generate data bitmask
     std::bitset<data_size> row_data_bitmask = std::bitset<data_size>(row_data) << data_start;
@@ -43,6 +43,10 @@ std::array<register_size, 62> sequence_generator::get_custom_spi_data_signal(con
 
     // TODO: determine which position to insert
     sequence_generator::write_sequence_to_custom_spi_sequence<register_size, 62, sequence_generator::LATCH_SIGNAL_SIZE>(sequence, data_size*2, sequence_generator::LATCH_SIGNAL);
+
+    for (register_size& s : sequence) {
+        s |= DEFAULT_SIGNAL;
+    }
 
     return sequence;
 }

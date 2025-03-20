@@ -15,7 +15,7 @@ using register_size = u_int16_t;
 class Driver
 {
 private:
-    register_size *current_bit_ptr;
+    const register_size *current_bit_ptr;
     int current_index;
     int array_len;
 
@@ -25,5 +25,7 @@ public:
 
     void initialize();
     void run();
-    void set_sequence(register_size *bit_sequence, int len);
+    void set_sequence(const register_size *bit_sequence, int len);
+
+    bool has_sequence();
 };

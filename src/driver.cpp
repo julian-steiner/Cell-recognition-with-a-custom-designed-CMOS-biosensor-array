@@ -29,7 +29,7 @@ void Driver::initialize(){
  * @param sequence Pointer to the sequence of 16-bit elements.
  * @param len The number of 16-bit elements inside the bit sequence.
  */
-void Driver::set_sequence(register_size *sequence, int len){
+void Driver::set_sequence(const register_size *sequence, int len){
     current_bit_ptr = sequence;
     current_index = 0;
     array_len = len;
@@ -42,7 +42,6 @@ void Driver::set_sequence(register_size *sequence, int len){
 void Driver::run(){
     if(current_index >= array_len){
         current_bit_ptr = nullptr;
-        GPIOJ->ODR = 1 << 5;
     }
     
     if(current_bit_ptr!=nullptr){
@@ -50,6 +49,10 @@ void Driver::run(){
         ++current_index;
     }
     else {
-        GPIOJ->ODR = 1 << 5;
+        GPIOJ->ODR = 1 << 5 | 1 << 1;
     }
+}
+
+bool Driver::has_sequence(){
+    return (current_bit_ptr != nullptr);
 }

@@ -20,7 +20,7 @@ namespace sequence_generator
     // Default actions and states
     // States for custom SPI
     const register_size LATCH_STATE = CLK_PIN | LATCH_PIN;
-    const register_size NO_SIGNAL = CLK_PIN;
+    const register_size NO_SIGNAL = CLK_PIN | RESET_PIN;
 
     // Default DIO states
     const register_size RESET_STATE = CLK_PIN;
@@ -28,6 +28,7 @@ namespace sequence_generator
 
     // Default sizes
     const size_t LATCH_SIGNAL_SIZE = 14;
+    const size_t RESET_SIGNAL_SIZE = 32;
 
     // Data signals
     const u_int8_t ROW_RESET_DATA = 0b000010;
@@ -38,6 +39,7 @@ namespace sequence_generator
     // Precoded signals
     // SPI Signals
     const std::array<register_size, LATCH_SIGNAL_SIZE> LATCH_SIGNAL = {NO_SIGNAL, NO_SIGNAL, LATCH_STATE, LATCH_STATE, NO_SIGNAL, NO_SIGNAL, LATCH_STATE, LATCH_STATE, NO_SIGNAL, NO_SIGNAL, LATCH_STATE, LATCH_STATE, NO_SIGNAL, NO_SIGNAL};
+    const std::array<register_size, RESET_SIGNAL_SIZE> RESET_SIGNAL = {NO_SIGNAL, NO_SIGNAL, RESET_STATE, RESET_STATE, RESET_STATE, RESET_STATE, RESET_STATE, RESET_STATE, RESET_STATE, RESET_STATE, RESET_STATE, RESET_STATE, RESET_STATE, RESET_STATE, NO_SIGNAL, NO_SIGNAL, NO_SIGNAL, NO_SIGNAL, RESET_STATE, RESET_STATE, RESET_STATE, RESET_STATE, RESET_STATE, RESET_STATE, RESET_STATE, RESET_STATE, RESET_STATE, RESET_STATE, RESET_STATE, RESET_STATE, NO_SIGNAL, NO_SIGNAL};
 
     /**
      * @brief Writes data to an spi sequence using the constant data pins specified. Needs 2*data_size space after the start_index
