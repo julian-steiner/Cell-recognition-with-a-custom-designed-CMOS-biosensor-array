@@ -53,7 +53,7 @@ void Driver::run(){
     }
     
     if(current_bit_ptr!=nullptr){
-        Serial.println(current_bit_ptr[current_index]);
+        //Serial.println(current_bit_ptr[current_index]);
         GPIOJ->ODR = current_bit_ptr[current_index];
         ++current_index;
     }
