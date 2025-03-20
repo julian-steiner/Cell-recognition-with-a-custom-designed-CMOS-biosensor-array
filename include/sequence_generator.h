@@ -1,7 +1,5 @@
 #pragma once
 
-// TODO : FIGURE OUT WHY THERE ARE 7 ZEROS
-
 #include <array>
 #include <bitset>
 

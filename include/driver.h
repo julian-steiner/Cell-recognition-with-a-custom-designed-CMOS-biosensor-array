@@ -18,6 +18,7 @@ private:
     const register_size *current_bit_ptr;
     int current_index;
     int array_len;
+    bool repeat;
 
 public:
     Driver();
@@ -25,7 +26,7 @@ public:
 
     void initialize();
     void run();
-    void set_sequence(const register_size *bit_sequence, int len);
+    void set_sequence(const register_size *bit_sequence, int len, bool repeat);
 
     bool has_sequence();
 };

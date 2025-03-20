@@ -1,6 +1,6 @@
 #include "driver.h"
 
-Driver::Driver() : current_bit_ptr(nullptr), current_index(0), array_len(0) {}
+Driver::Driver() : current_bit_ptr(nullptr), current_index(0), array_len(0), repeat(false) {}
 
 Driver::~Driver()
 {
@@ -28,11 +28,14 @@ void Driver::initialize(){
  * 
  * @param sequence Pointer to the sequence of 16-bit elements.
  * @param len The number of 16-bit elements inside the bit sequence.
+ * @param repeat Repeat sequence upon ending for testing purposes.
  */
-void Driver::set_sequence(const register_size *sequence, int len){
+void Driver::set_sequence(const register_size *sequence, int len, bool repeat){
     current_bit_ptr = sequence;
     current_index = 0;
     array_len = len;
+
+    this->repeat = repeat;
 }
 
 /**
@@ -41,10 +44,16 @@ void Driver::set_sequence(const register_size *sequence, int len){
  */
 void Driver::run(){
     if(current_index >= array_len){
-        current_bit_ptr = nullptr;
+        if(!repeat){
+            current_bit_ptr = nullptr;
+        }
+        else{
+            current_index = 0;
+        }
     }
     
     if(current_bit_ptr!=nullptr){
+        Serial.println(current_bit_ptr[current_index]);
         GPIOJ->ODR = current_bit_ptr[current_index];
         ++current_index;
     }
