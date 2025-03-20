@@ -2,9 +2,10 @@
 #include <Serial.h>
 #include "driver.h"
 #include "sequence_generator.h"
-#include "analog_read.cpp"
+#include "analog_read.h"
 
 Driver spi_driver;
+Analog analog_instance;
 
 std::array<register_size, 62> seq;
 
@@ -19,7 +20,7 @@ void setup() {
   seq = sequence_generator::get_custom_spi_data_signal(12, 12, sequence_generator::COL_RESET_DATA, sequence_generator::ROW_RESET_DATA);
   spi_driver.set_sequence(seq.data(), seq.size(), true);
 
-  analog::analog_setup(16);
+  analog_instance.analog_setup(16);
 }
 
 void loop() {
@@ -32,7 +33,6 @@ void loop() {
   delay(10);
 
   if(spi_driver.has_sequence()){
-    double read_voltage = analog::read_value(16);
-    Serial.println(analog::read_value(16));
+    Serial.println(analog_instance.read_value());
   }
 }
