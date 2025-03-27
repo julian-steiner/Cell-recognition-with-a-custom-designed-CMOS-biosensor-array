@@ -28,7 +28,7 @@ namespace sequence_generator
     const size_t LATCH_SIGNAL_SIZE = 14;
     const size_t RESET_SIGNAL_SIZE = 32;
 
-    // Data signals
+    // Data signals (passed to chip from right to left)
     const u_int8_t ROW_RESET_DATA = 0b000010;
     const u_int8_t ROW_READ_DATA = 0b100010;
     const u_int8_t COL_RESET_DATA = 0b010000;
@@ -101,4 +101,5 @@ namespace sequence_generator
      * @return const std::array<register_size, 62>
      */
     std::array<register_size, 62> get_custom_spi_data_signal(const u_int8_t col_addr, const u_int8_t row_addr, const u_int8_t col_data, const u_int8_t row_data);
+
 }

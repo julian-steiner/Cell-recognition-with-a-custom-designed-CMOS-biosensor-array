@@ -11,7 +11,6 @@ Driver::~Driver()
  * 
  */
 void Driver::initialize(){
-
     pinMode(25, OUTPUT);
     pinMode(27, OUTPUT);
     pinMode(29, OUTPUT);
@@ -20,7 +19,6 @@ void Driver::initialize(){
     pinMode(35, OUTPUT);
     pinMode(37, OUTPUT);
     pinMode(38, OUTPUT);
-
 }
 
 /**
