@@ -29,10 +29,13 @@ namespace sequence_generator
     const size_t RESET_SIGNAL_SIZE = 32;
 
     // Data signals (passed to chip from right to left)
-    const u_int8_t ROW_RESET_DATA = 0b000010;
-    const u_int8_t ROW_READ_DATA = 0b100010;
-    const u_int8_t COL_RESET_DATA = 0b010000;
-    const u_int8_t COL_READ_DATA = 0b010100;
+    // ROW (CTL 0-5): SVN_EN, SVP_EN, DVP_EN, EXN_EN, DVN_EN, EXP_EN
+    const u_int8_t ROW_RESET_DATA = 0b000001;
+    const u_int8_t ROW_READ_DATA = 0b011001;
+
+    // COL (CTL 0-5): PEN_EN, EEN_EN, EXP_EN, SVN_EN, SVP_EN, EXP_EN
+    const u_int8_t COL_RESET_DATA = 0b001000;
+    const u_int8_t COL_READ_DATA = 0b101010;
 
     // Precoded signals
     // SPI Signals
