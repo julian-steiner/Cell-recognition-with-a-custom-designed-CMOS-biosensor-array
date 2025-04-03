@@ -13,10 +13,9 @@
 // const int HTIM3_PRESCALER = 99;
 // const int HTIM3_PERIOD = 119;
 // 200KHz setting
-const int HTIM3_PRESCALER = 49;
-const int HTIM3_PERIOD = 11;
+const int HTIM3_PRESCALER = 29;
+const int HTIM3_PERIOD = 5;
 const int EXPOSURE_TIME_MILLIS = 20;
-
   
 // Declarations
 Driver spi_driver;
@@ -43,7 +42,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   }
 }
 
-double voltage = 0;
+double reset_voltage = 0;
+double current_voltage = 0;
 
 void setup()
 {
@@ -94,15 +94,23 @@ void setup()
   // seq = sequence_generator::get_custom_spi_data_signal(70, 0, TEST_COL_DATA, TEST_ROW_DATA);
   // spi_driver.set_sequence(seq.data(), seq.size(), false);
 
-  seq = sequence_generator::get_custom_spi_data_signal(10, 10, sequence_generator::COL_RESET_DATA, sequence_generator::ROW_RESET_DATA);
+  // Measure the reset level of the first pixel in the array
+  seq = sequence_generator::get_custom_spi_data_signal(0, 0, sequence_generator::COL_CALIBRATE_DATA, sequence_generator::ROW_CALIBRATE_DATA);
   spi_driver.set_sequence(seq.data(), seq.size(), false);
-
+  // Delay to recharge the pixel to full voltage
   HAL_Delay(100);
+  reset_voltage = analog_input_manager.read_value();
 
-  seq = sequence_generator::get_custom_spi_data_signal(10, 10, sequence_generator::COL_READ_DATA, sequence_generator::ROW_READ_DATA);
+
+  seq = sequence_generator::get_custom_spi_data_signal(0, 0, sequence_generator::COL_RESET_DATA, sequence_generator::ROW_RESET_DATA);
+  // Delay to recharge
+  HAL_Delay(100);
+  seq = sequence_generator::get_custom_spi_data_signal(0, 0, sequence_generator::COL_READ_DATA, sequence_generator::ROW_READ_DATA);
   spi_driver.set_sequence(seq.data(), seq.size(), false);
 
-  voltage = analog_input_manager.read_value();
+  // Expose the pixel and read the voltage
+  HAL_Delay(EXPOSURE_TIME_MILLIS);
+  current_voltage = analog_input_manager.read_value();
 
   // HAL_Delay(300);
   // spi_driver.set_sequence(reset_seq.data(), reset_seq.size(), false);
@@ -111,6 +119,9 @@ void setup()
 void loop()
 {
   HAL_Delay(100);
-  // Serial.println(voltage);
-  Serial.println(analog_input_manager.read_value());
+  Serial.println("START PRINT");
+  Serial.println(reset_voltage);
+  Serial.println(current_voltage);
+  Serial.println(reset_voltage-current_voltage);
+  // Serial.println(analog_input_manager.read_value());
 }
