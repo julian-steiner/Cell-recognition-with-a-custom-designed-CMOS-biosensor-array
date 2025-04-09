@@ -3,6 +3,7 @@
 #include "driver.h"
 #include "sequence_generator.h"
 #include <analog_read.h>
+#include "sensor_driver.h"
 
 // Constants
 // Sets the frequency to 1Hz (120Mhz / ((prescaler+1)*(period+1)))
@@ -18,10 +19,10 @@ const int HTIM3_PERIOD = 5;
 const int EXPOSURE_TIME_MILLIS = 20;
   
 // Declarations
-Driver spi_driver;
+SPI_Driver spi_driver;
 std::array<register_size, 62> seq;
 std::array<register_size, 62> reset_seq;
-Analog analog_input_manager;
+SensorDriver sensor_driver(spi_driver, A0, A1, A2, A3);
 
 
 // Set up the interrupt handler and hardware timer
@@ -42,8 +43,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   }
 }
 
-double reset_voltage = 0;
-double current_voltage = 0;
+uint16_t pixel_buffer = 0;
+uint16_t image_buffer[128*128] = {};
 
 void setup()
 {
@@ -52,7 +53,6 @@ void setup()
 
   // Initialize the SPI driver
   spi_driver.initialize();
-  analog_input_manager.analog_setup(16);
 
   // Initialize the hardware timer 3
   // Enable the interrupt handler for the timer
@@ -75,53 +75,20 @@ void setup()
   // Start the timer and interrupt handler
   HAL_TIM_Base_Start_IT(&htim3);
 
-  pinMode(A0, INPUT);
+  // Initialize the sensor driver
+  sensor_driver.initialize_sensor();
+  sensor_driver.calibrate_readout(0, 0);
 
-  // Set a sequence to the driver to execute
-  // spi_driver.set_sequence(&sequence_generator::RESET_SIGNAL[0], sequence_generator::RESET_SIGNAL_SIZE);
-  // seq = sequence_generator::get_custom_spi_data_signal(127, 127, sequence_generator::COL_READ_DATA, sequence_generator::ROW_READ_DATA);
-  // spi_driver.set_sequence(seq.data(), seq.size(), true);
+  // Test to reset the sensor and read a single pixel
+  sensor_driver.reset_sensor();
+  sensor_driver.read_single_pixel(0, 0, &pixel_buffer, EXPOSURE_TIME_MILLIS);
 
-  // Reset the sensor
-  spi_driver.set_sequence(sequence_generator::RESET_SIGNAL.data(), sequence_generator::RESET_SIGNAL_SIZE, false);
-  HAL_Delay(1000);
-
-  // // Test data which pulls pin to 0.7V
-  // // ROW (CTL 0-5): SVN_EN, SVP_EN, DVP_EN, EXN_EN, DVN_EN, EXP_EN
-  // // COL (CTL 0-5): PEN_EN, EEN_EN, EXP_EN, SVN_EN, SVP_EN, EXN_EN
-  // const u_int8_t TEST_ROW_DATA = 0b011001;
-  // const u_int8_t TEST_COL_DATA = 0b101010;
-  // seq = sequence_generator::get_custom_spi_data_signal(70, 0, TEST_COL_DATA, TEST_ROW_DATA);
-  // spi_driver.set_sequence(seq.data(), seq.size(), false);
-
-  // Measure the reset level of the first pixel in the array
-  seq = sequence_generator::get_custom_spi_data_signal(0, 0, sequence_generator::COL_CALIBRATE_DATA, sequence_generator::ROW_CALIBRATE_DATA);
-  spi_driver.set_sequence(seq.data(), seq.size(), false);
-  // Delay to recharge the pixel to full voltage
-  HAL_Delay(100);
-  reset_voltage = analog_input_manager.read_value();
-
-
-  seq = sequence_generator::get_custom_spi_data_signal(0, 0, sequence_generator::COL_RESET_DATA, sequence_generator::ROW_RESET_DATA);
-  // Delay to recharge
-  HAL_Delay(100);
-  seq = sequence_generator::get_custom_spi_data_signal(0, 0, sequence_generator::COL_READ_DATA, sequence_generator::ROW_READ_DATA);
-  spi_driver.set_sequence(seq.data(), seq.size(), false);
-
-  // Expose the pixel and read the voltage
-  HAL_Delay(EXPOSURE_TIME_MILLIS);
-  current_voltage = analog_input_manager.read_value();
-
-  // HAL_Delay(300);
-  // spi_driver.set_sequence(reset_seq.data(), reset_seq.size(), false);
+  // Test to read the whole image
+  // sensor_driver.read_image(image_buffer, EXPOSURE_TIME_MILLIS);
 }
 
 void loop()
 {
-  HAL_Delay(100);
-  Serial.println("START PRINT");
-  Serial.println(reset_voltage);
-  Serial.println(current_voltage);
-  Serial.println(reset_voltage-current_voltage);
-  // Serial.println(analog_input_manager.read_value());
+  HAL_Delay(400);
+  Serial.println(pixel_buffer);
 }

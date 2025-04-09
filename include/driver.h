@@ -4,15 +4,15 @@
 using register_size = u_int16_t;
 
 /**
- * @class Driver
+ * @class SPI_Driver
  * @brief Controls the GPIO pins of register J on the Arduino Giga using a 16-bit bit-sequence.
  * 
  * This class allows for the initialization of GPIO-J register pins. It updates them based on a sequence of 
  * 16-bit values.
  * 
- * **IMPORTANT**: You must call `initialize()` before calling any other method of the `Driver` class.
+ * **IMPORTANT**: You must call `initialize()` before calling any other method of the `SPI_Driver` class.
  */
-class Driver
+class SPI_Driver
 {
 private:
     const register_size *current_bit_ptr;
@@ -21,8 +21,8 @@ private:
     bool repeat;
 
 public:
-    Driver();
-    ~Driver();
+    SPI_Driver();
+    ~SPI_Driver();
 
     void initialize();
     void run();
