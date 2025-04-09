@@ -9,7 +9,6 @@ private:
     uint8_t pin_3;
     uint8_t pin_4;
     SPI_Driver& driver_handle;
-    int calibration_level;
     std::array<register_size, 62> current_sequence;
 
     /**
@@ -22,6 +21,7 @@ private:
     uint8_t analog_pin_map(int x, int y);
 
 public:
+    int calibration_level;
     SensorDriver(SPI_Driver& driver_handle, uint8_t pin_1, uint8_t pin_2, uint8_t pin_3, uint8_t pin_4);
 
     void initialize_sensor();
@@ -43,7 +43,9 @@ public:
      * @param buffer The buffer where to store the read out data
      * @param exposure_time_millis The exposure time
      */
-    void read_single_pixel(int x, int y, uint16_t *buffer, int exposure_time_millis);
+    void read_single_pixel(int x, int y, int *buffer, int exposure_time_millis);
+
+    void reset_single_pixel(int x, int y);
 
     /**
      * @brief Reads an image from the sensor
@@ -51,5 +53,5 @@ public:
      * @param buffer The buffer to store the image (ensure that the size is big enough (128*128))
      * @param exposure_time_millis Exposure time
      */
-    void read_image(uint16_t* buffer, int exposure_time_millis);
+    void read_image(int* buffer, int exposure_time_millis);
 };

@@ -16,7 +16,7 @@
 // 200KHz setting
 const int HTIM3_PRESCALER = 29;
 const int HTIM3_PERIOD = 5;
-const int EXPOSURE_TIME_MILLIS = 20;
+const int EXPOSURE_TIME_MILLIS = 10;
   
 // Declarations
 SPI_Driver spi_driver;
@@ -43,8 +43,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   }
 }
 
-uint16_t pixel_buffer = 0;
-uint16_t image_buffer[128*128] = {};
+int pixel_buffer = 0;
+int reset_level = 0;
+// uint16_t image_buffer[128*128] = {};
 
 void setup()
 {
@@ -79,9 +80,19 @@ void setup()
   sensor_driver.initialize_sensor();
   sensor_driver.calibrate_readout(0, 0);
 
+  reset_level = sensor_driver.calibration_level;
+
+  HAL_Delay(100);
+
   // Test to reset the sensor and read a single pixel
-  sensor_driver.reset_sensor();
+  // sensor_driver.reset_sensor();
+
   sensor_driver.read_single_pixel(0, 0, &pixel_buffer, EXPOSURE_TIME_MILLIS);
+
+  // Ensure that the driver is finished before proceeding
+  while (spi_driver.has_sequence()) {
+    HAL_Delay(1);
+  }
 
   // Test to read the whole image
   // sensor_driver.read_image(image_buffer, EXPOSURE_TIME_MILLIS);
@@ -89,6 +100,8 @@ void setup()
 
 void loop()
 {
-  HAL_Delay(400);
+  HAL_Delay(100);
+  Serial.println("Measurement");
   Serial.println(pixel_buffer);
+  Serial.println(reset_level);
 }

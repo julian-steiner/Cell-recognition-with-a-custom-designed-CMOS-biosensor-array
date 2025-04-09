@@ -31,11 +31,13 @@ namespace sequence_generator
     // Data signals (passed to chip from right to left)
     // ROW (CTL 0-5): SVN_EN, SVP_EN, DVP_EN, EXN_EN, DVN_EN, EXP_EN
     const u_int8_t ROW_RESET_DATA = 0b000001;
+    const u_int8_t ROW_READ_PREPARE_DATA = 0b001001;
     const u_int8_t ROW_READ_DATA = 0b011000;
     const u_int8_t ROW_CALIBRATE_DATA = 0b011001;
 
     // COL (CTL 0-5): PEN_EN, EEN_EN, EXP_EN, SVN_EN, SVP_EN, EXN_EN
     const u_int8_t COL_RESET_DATA = 0b001000;
+    const u_int8_t COL_READ_PREPARE_DATA = 0b101000;
     const u_int8_t COL_READ_DATA = 0b100010;
     const u_int8_t COL_CALIBRATE_DATA = 0b101010;
 
