@@ -8,6 +8,7 @@ private:
     uint8_t pin_2;
     uint8_t pin_3;
     uint8_t pin_4;
+    bool debug_mode;
     SPI_Driver& driver_handle;
     std::array<register_size, 62> current_sequence;
 
@@ -22,7 +23,7 @@ private:
 
 public:
     int calibration_level;
-    SensorDriver(SPI_Driver& driver_handle, uint8_t pin_1, uint8_t pin_2, uint8_t pin_3, uint8_t pin_4);
+    SensorDriver(SPI_Driver& driver_handle, uint8_t pin_1, uint8_t pin_2, uint8_t pin_3, uint8_t pin_4, bool debug_mode);
 
     void initialize_sensor();
 

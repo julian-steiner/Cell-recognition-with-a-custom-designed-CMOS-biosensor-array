@@ -1,11 +1,12 @@
 #include "sensor_driver.h"
 
-SensorDriver::SensorDriver(SPI_Driver &driver_handle, uint8_t pin_1, uint8_t pin_2, uint8_t pin_3, uint8_t pin_4) : pin_1(pin_1),
-                                                                                                                    pin_2(pin_2),
-                                                                                                                    pin_3(pin_3),
-                                                                                                                    pin_4(pin_4),
-                                                                                                                    driver_handle(driver_handle),
-                                                                                                                    calibration_level(13902)
+SensorDriver::SensorDriver(SPI_Driver &driver_handle, uint8_t pin_1, uint8_t pin_2, uint8_t pin_3, uint8_t pin_4, bool debug_mode) : pin_1(pin_1),
+                                                                                                                                     pin_2(pin_2),
+                                                                                                                                     pin_3(pin_3),
+                                                                                                                                     pin_4(pin_4),
+                                                                                                                                     driver_handle(driver_handle),
+                                                                                                                                     calibration_level(13902),
+                                                                                                                                     debug_mode(debug_mode)
 {
     // Initialize the analog input pins
     pinMode(pin_1, INPUT);
@@ -51,10 +52,16 @@ void SensorDriver::calibrate_readout(int x, int y)
 
 void SensorDriver::reset_sensor()
 {
+    // Debug mode that doesn't do all the pixels
+    int upper_bound = 128;
+    if (debug_mode) {
+        upper_bound = 10;
+    }
+
     // Loop through all the pixels for now
-    for (unsigned x = 0; x < 128; x++)
+    for (unsigned x = 0; x < upper_bound; x++)
     {
-        for (unsigned y = 0; y < 128; y++)
+        for (unsigned y = 0; y < upper_bound; y++)
         {
             // Actively wait while the driver is still busy
             while (driver_handle.has_sequence())
@@ -108,9 +115,17 @@ void SensorDriver::reset_single_pixel(int x, int y)
 
 void SensorDriver::read_image(int *buffer, int exposure_time_millis)
 {
+    // Handle debug mode for faster debugging
+    int upper_bound = 128;
+    if (debug_mode) {
+        upper_bound = 10;
+    }
+
     // Loop through the pixels and perform readouts, saving into the buffer
-    for (unsigned y = 0; y < 128; y++) {
-        for (unsigned x = 0; x < 128; x++) {
+    for (unsigned y = 0; y < upper_bound; y++)
+    {
+        for (unsigned x = 0; x < upper_bound; x++)
+        {
             read_single_pixel(x, y, buffer++, exposure_time_millis);
         }
     }
@@ -130,5 +145,5 @@ uint8_t SensorDriver::analog_pin_map(int x, int y)
     {
         return pin_3;
     }
-    return 4;
+    return pin_4;
 }

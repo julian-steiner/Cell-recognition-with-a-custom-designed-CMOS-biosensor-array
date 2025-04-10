@@ -22,7 +22,7 @@ const int EXPOSURE_TIME_MILLIS = 10;
 SPI_Driver spi_driver;
 std::array<register_size, 62> seq;
 std::array<register_size, 62> reset_seq;
-SensorDriver sensor_driver(spi_driver, A0, A1, A2, A3);
+SensorDriver sensor_driver(spi_driver, A0, A1, A2, A3, true);
 
 
 // Set up the interrupt handler and hardware timer
@@ -45,7 +45,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 int pixel_buffer = 0;
 int reset_level = 0;
-// uint16_t image_buffer[128*128] = {};
+int image_buffer[100] = {};
 
 void setup()
 {
@@ -85,9 +85,11 @@ void setup()
   HAL_Delay(100);
 
   // Test to reset the sensor and read a single pixel
-  // sensor_driver.reset_sensor();
+  sensor_driver.reset_sensor();
 
-  sensor_driver.read_single_pixel(0, 0, &pixel_buffer, EXPOSURE_TIME_MILLIS);
+  // sensor_driver.reset_single_pixel(50, 80);
+  // HAL_Delay(100);
+  // sensor_driver.read_single_pixel(50, 80, &pixel_buffer, EXPOSURE_TIME_MILLIS);
 
   // Ensure that the driver is finished before proceeding
   while (spi_driver.has_sequence()) {
@@ -95,13 +97,19 @@ void setup()
   }
 
   // Test to read the whole image
-  // sensor_driver.read_image(image_buffer, EXPOSURE_TIME_MILLIS);
+  sensor_driver.read_image(image_buffer, EXPOSURE_TIME_MILLIS);
 }
 
 void loop()
 {
-  HAL_Delay(100);
-  Serial.println("Measurement");
-  Serial.println(pixel_buffer);
-  Serial.println(reset_level);
+  Serial.print("Measurement\n");
+  Serial.print("Calibrated reset level : " + String(reset_level) + "\n");
+  for (unsigned y = 0; y < 10; y++) {
+    for (unsigned x = 0; x < 10; x++) {
+      Serial.print(String(*(image_buffer+10*y+x)) + ",");
+    }
+    Serial.print("\n");
+  }
+  HAL_Delay(1000);
+  // Serial.println(pixel_buffer);
 }
