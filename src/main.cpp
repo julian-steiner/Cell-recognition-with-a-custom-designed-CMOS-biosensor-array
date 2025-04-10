@@ -16,13 +16,14 @@
 // 200KHz setting
 const int HTIM3_PRESCALER = 29;
 const int HTIM3_PERIOD = 5;
-const int EXPOSURE_TIME_MILLIS = 10;
+const int EXPOSURE_TIME_MILLIS = 5;
   
 // Declarations
 SPI_Driver spi_driver;
 std::array<register_size, 62> seq;
 std::array<register_size, 62> reset_seq;
-SensorDriver sensor_driver(spi_driver, A0, A1, A2, A3, true);
+const int image_size = 128;
+SensorDriver sensor_driver(spi_driver, A0, A1, A2, A3, false);
 
 
 // Set up the interrupt handler and hardware timer
@@ -45,7 +46,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 int pixel_buffer = 0;
 int reset_level = 0;
-int image_buffer[100] = {};
+int image_buffer[image_size*image_size] = {};
 
 void setup()
 {
@@ -54,6 +55,10 @@ void setup()
 
   // Initialize the SPI driver
   spi_driver.initialize();
+
+  // Turn on the LED
+  pinMode(86, OUTPUT);
+  digitalWrite(86, LOW);
 
   // Initialize the hardware timer 3
   // Enable the interrupt handler for the timer
@@ -84,32 +89,33 @@ void setup()
 
   HAL_Delay(100);
 
-  // Test to reset the sensor and read a single pixel
+  // Read a full image
   sensor_driver.reset_sensor();
+  sensor_driver.read_image(image_buffer, EXPOSURE_TIME_MILLIS);
 
-  // sensor_driver.reset_single_pixel(50, 80);
+  // Read a single pixel
+  // sensor_driver.reset_single_pixel(10, 10);
   // HAL_Delay(100);
-  // sensor_driver.read_single_pixel(50, 80, &pixel_buffer, EXPOSURE_TIME_MILLIS);
+  // sensor_driver.read_single_pixel(10, 10, &pixel_buffer, EXPOSURE_TIME_MILLIS);
 
   // Ensure that the driver is finished before proceeding
   while (spi_driver.has_sequence()) {
     HAL_Delay(1);
   }
-
-  // Test to read the whole image
-  sensor_driver.read_image(image_buffer, EXPOSURE_TIME_MILLIS);
 }
 
 void loop()
 {
-  Serial.print("Measurement\n");
-  Serial.print("Calibrated reset level : " + String(reset_level) + "\n");
-  for (unsigned y = 0; y < 10; y++) {
-    for (unsigned x = 0; x < 10; x++) {
-      Serial.print(String(*(image_buffer+10*y+x)) + ",");
+  digitalWrite(86, HIGH);
+  Serial.print("BEGIN_DATA\n");
+  Serial.print("RESET_LEVEL," + String(reset_level) + "\n");
+  for (unsigned y = 0; y < image_size; y++) {
+    for (unsigned x = 0; x < image_size; x++) {
+      Serial.print(String(*(image_buffer+image_size*y+x)) + ",");
     }
     Serial.print("\n");
   }
+  Serial.print("END_DATA\n");
   HAL_Delay(1000);
   // Serial.println(pixel_buffer);
 }

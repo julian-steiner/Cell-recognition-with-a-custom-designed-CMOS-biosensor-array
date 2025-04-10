@@ -55,7 +55,7 @@ void SensorDriver::reset_sensor()
     // Debug mode that doesn't do all the pixels
     int upper_bound = 128;
     if (debug_mode) {
-        upper_bound = 10;
+        upper_bound = debug_mode_limit;
     }
 
     // Loop through all the pixels for now
@@ -83,6 +83,7 @@ void SensorDriver::read_single_pixel(int x, int y, int *buffer, int exposure_tim
     {
         HAL_Delay(1);
     }
+    // Prepare the read (charge gate capacity)
     current_sequence = sequence_generator::get_custom_spi_data_signal(x, y, sequence_generator::COL_READ_PREPARE_DATA, sequence_generator::ROW_READ_PREPARE_DATA);
     driver_handle.set_sequence(current_sequence.data(), current_sequence.size(), false);
     HAL_Delay(1);
@@ -118,7 +119,7 @@ void SensorDriver::read_image(int *buffer, int exposure_time_millis)
     // Handle debug mode for faster debugging
     int upper_bound = 128;
     if (debug_mode) {
-        upper_bound = 10;
+        upper_bound = debug_mode_limit;
     }
 
     // Loop through the pixels and perform readouts, saving into the buffer
