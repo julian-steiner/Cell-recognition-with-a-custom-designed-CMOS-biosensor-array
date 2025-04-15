@@ -1,3 +1,5 @@
 .pio
 .vscode/*
 .vscode/extensions.json
+./Python-serial-receiver/venv/*
+*.png
