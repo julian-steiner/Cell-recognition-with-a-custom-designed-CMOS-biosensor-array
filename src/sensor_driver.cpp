@@ -1,4 +1,5 @@
 #include "sensor_driver.h"
+#include <memory>
 
 SensorDriver::SensorDriver(SPI_Driver &driver_handle, uint8_t pin_1, uint8_t pin_2, uint8_t pin_3, uint8_t pin_4, bool exp, bool debug_mode) : pin_1(pin_1),
                                                                                                                                                pin_2(pin_2),
@@ -72,28 +73,37 @@ void SensorDriver::calibrate_readout(int x, int y)
 void SensorDriver::reset_sensor()
 {
     // Debug mode that doesn't do all the pixels
-    int upper_bound = 128;
+    unsigned upper_bound = 128;
     if (debug_mode)
     {
         upper_bound = debug_mode_limit;
     }
 
-    // Loop through all the pixels for now
-    for (unsigned x = 0; x < upper_bound; x++)
-    {
-        for (unsigned y = 0; y < upper_bound; y++)
-        {
-            // Actively wait while the driver is still busy
-            while (driver_handle.has_sequence())
-            {
-                HAL_Delay(1);
-            }
+    // Allocate the pingpong buffer
+    
+    register_size* col_reset_seq = (register_size*)malloc(62*upper_bound*sizeof(register_size));
+    register_size* col_reset_seq_t = (register_size*)malloc(62*upper_bound*sizeof(register_size));
 
-            // Generate sequence and apply
-            sequence_generator::get_custom_spi_data_signal(current_sequence, x, y, COL_RESET_DATA, ROW_RESET_DATA);
-            driver_handle.set_sequence(current_sequence, current_sequence_size, false);
+    // Loop through all the pixels for now
+    for (unsigned y = 0; y < upper_bound; y++)
+    {
+        // Fill the sequence for the whole row
+        for (unsigned x = 0; x < upper_bound; x++) {
+            sequence_generator::get_custom_spi_data_signal(col_reset_seq_t+(x*62), x, y, COL_RESET_DATA, ROW_RESET_DATA);
         }
+
+        // Actively wait while the driver is still busy
+        while (driver_handle.has_sequence()) {}
+
+        // Generate sequence and apply
+        std::swap(col_reset_seq, col_reset_seq_t);
+        driver_handle.set_sequence(col_reset_seq, 62*upper_bound, false);
     }
+
+    // Wait until the driver finishes and free the memory (also remove sequence from driver)
+    while (driver_handle.has_sequence()) {}
+    free(col_reset_seq_t);
+    free(col_reset_seq);
 }
 
 void SensorDriver::read_single_pixel(int x, int y, int *buffer, int exposure_time_millis)

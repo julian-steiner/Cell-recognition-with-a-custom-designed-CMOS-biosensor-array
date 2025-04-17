@@ -1,6 +1,6 @@
 #include "driver.h"
 
-SPI_Driver::SPI_Driver() : current_bit_ptr(nullptr), current_index(0), array_len(0), repeat(false) {}
+SPI_Driver::SPI_Driver() : current_bit_ptr(nullptr), current_index(0), array_len(0), repeat(false), __has_sequence(false) {}
 
 SPI_Driver::~SPI_Driver()
 {
@@ -34,6 +34,7 @@ void SPI_Driver::set_sequence(const register_size *sequence, int len, bool repea
     current_bit_ptr = sequence;
     current_index = 0;
     array_len = len;
+    __has_sequence = true;
 
     this->repeat = repeat;
 }
@@ -49,6 +50,7 @@ void SPI_Driver::run()
         if (!repeat)
         {
             current_bit_ptr = nullptr;
+            __has_sequence = false;
         }
         else
         {
@@ -63,11 +65,12 @@ void SPI_Driver::run()
     }
     else
     {
+        __has_sequence = false;
         GPIOJ->ODR = 1 << 5 | 1 << 1;
     }
 }
 
 bool SPI_Driver::has_sequence()
 {
-    return (current_bit_ptr != nullptr);
+    return __has_sequence;
 }

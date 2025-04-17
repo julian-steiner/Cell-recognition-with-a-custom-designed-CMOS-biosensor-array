@@ -83,20 +83,20 @@ void setup()
 
   // Initialize the sensor driver
   sensor_driver.initialize_sensor();
-  sensor_driver.calibrate_readout(120, 120);
+  sensor_driver.calibrate_readout(0, 0);
 
   reset_level = sensor_driver.calibration_level;
 
   HAL_Delay(100);
 
   // Read a full image
-  // sensor_driver.reset_sensor();
+  sensor_driver.reset_sensor();
   // sensor_driver.read_image(image_buffer, EXPOSURE_TIME_MILLIS);
 
   // Read a single pixel
-  sensor_driver.reset_single_pixel(120, 120);
-  HAL_Delay(100);
-  sensor_driver.read_single_pixel(120, 120, &pixel_buffer, EXPOSURE_TIME_MILLIS);
+  // sensor_driver.reset_single_pixel(120, 120);
+  // HAL_Delay(100);
+  // sensor_driver.read_single_pixel(120, 120, &pixel_buffer, EXPOSURE_TIME_MILLIS);
 
   // Ensure that the driver is finished before proceeding
   while (spi_driver.has_sequence()) {}

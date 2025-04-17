@@ -8,7 +8,7 @@ private:
     uint8_t pin_2;
     uint8_t pin_3;
     uint8_t pin_4;
-    int debug_mode_limit = 40;
+    unsigned debug_mode_limit = 40;
     bool debug_mode;
     bool exp;
     SPI_Driver& driver_handle;
