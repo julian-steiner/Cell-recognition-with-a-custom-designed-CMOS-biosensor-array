@@ -27,6 +27,7 @@ namespace sequence_generator
     // Default sizes
     const size_t LATCH_SIGNAL_SIZE = 14;
     const size_t RESET_SIGNAL_SIZE = 32;
+    const size_t SPI_SEQUENCE_SIZE = 62;
 
     // Data signals (passed to chip from right to left)
     // ROW (CTL 0-5): SVN_EN, SVP_EN, DVP_EN, EXN_EN, DVN_EN, EXP_EN

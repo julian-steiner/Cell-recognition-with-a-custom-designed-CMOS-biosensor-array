@@ -13,7 +13,7 @@ private:
     bool exp;
     SPI_Driver& driver_handle;
     register_size* current_sequence;
-    uint current_sequence_size;
+    uint spi_sequence_size;
 
     u_int8_t ROW_RESET_DATA;
     u_int8_t ROW_READ_DATA;

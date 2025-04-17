@@ -12,7 +12,7 @@
  */
 void sequence_generator::get_custom_spi_data_signal(register_size* buffer, u_int8_t col_addr, const u_int8_t row_addr, const u_int8_t col_data, const u_int8_t row_data)
 {
-    const uint length = 62;
+    const uint length = SPI_SEQUENCE_SIZE;
     const uint data_size = 6 + 6 + 3 + 7 + 2;
     const uint data_start = 6;
     const uint write_data_start = 6 + 6;

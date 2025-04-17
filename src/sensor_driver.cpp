@@ -20,8 +20,8 @@ SensorDriver::SensorDriver(SPI_Driver &driver_handle, uint8_t pin_1, uint8_t pin
     pinMode(pin_4, INPUT);
     analogReadResolution(16);
 
-    current_sequence = (register_size*)malloc(62*sizeof(register_size));
-    current_sequence_size = 62;
+    spi_sequence_size = sequence_generator::SPI_SEQUENCE_SIZE;
+    current_sequence = (register_size*)malloc(spi_sequence_size*sizeof(register_size));
 
     // Initialize the signals
     if (exp)
@@ -63,7 +63,7 @@ void SensorDriver::calibrate_readout(int x, int y)
 
     // Set the pixel into the calibrate state
     sequence_generator::get_custom_spi_data_signal(current_sequence, x, y, COL_CALIBRATE_DATA, ROW_CALIBRATE_DATA);
-    driver_handle.set_sequence(current_sequence, current_sequence_size, false);
+    driver_handle.set_sequence(current_sequence, spi_sequence_size, false);
     HAL_Delay(100);
 
     // Extract the calibration level
@@ -81,15 +81,15 @@ void SensorDriver::reset_sensor()
 
     // Allocate the pingpong buffer
     
-    register_size* col_reset_seq = (register_size*)malloc(62*upper_bound*sizeof(register_size));
-    register_size* col_reset_seq_t = (register_size*)malloc(62*upper_bound*sizeof(register_size));
+    register_size* col_reset_seq = (register_size*)malloc(spi_sequence_size*upper_bound*sizeof(register_size));
+    register_size* col_reset_seq_t = (register_size*)malloc(spi_sequence_size*upper_bound*sizeof(register_size));
 
     // Loop through all the pixels for now
     for (unsigned y = 0; y < upper_bound; y++)
     {
         // Fill the sequence for the whole row
         for (unsigned x = 0; x < upper_bound; x++) {
-            sequence_generator::get_custom_spi_data_signal(col_reset_seq_t+(x*62), x, y, COL_RESET_DATA, ROW_RESET_DATA);
+            sequence_generator::get_custom_spi_data_signal(col_reset_seq_t+(x*spi_sequence_size), x, y, COL_RESET_DATA, ROW_RESET_DATA);
         }
 
         // Actively wait while the driver is still busy
@@ -97,7 +97,7 @@ void SensorDriver::reset_sensor()
 
         // Generate sequence and apply
         std::swap(col_reset_seq, col_reset_seq_t);
-        driver_handle.set_sequence(col_reset_seq, 62*upper_bound, false);
+        driver_handle.set_sequence(col_reset_seq, spi_sequence_size*upper_bound, false);
     }
 
     // Wait until the driver finishes and free the memory (also remove sequence from driver)
@@ -113,7 +113,7 @@ void SensorDriver::read_single_pixel(int x, int y, int *buffer, int exposure_tim
 
     // The actual readout
     sequence_generator::get_custom_spi_data_signal(current_sequence, x, y, COL_READ_DATA, ROW_READ_DATA);
-    driver_handle.set_sequence(current_sequence, current_sequence_size, false);
+    driver_handle.set_sequence(current_sequence, spi_sequence_size, false);
 
     // Expose the pixel and read the voltage
     HAL_Delay(exposure_time_millis);
@@ -121,7 +121,7 @@ void SensorDriver::read_single_pixel(int x, int y, int *buffer, int exposure_tim
 
     // Reset the pixel again
     sequence_generator::get_custom_spi_data_signal(current_sequence, x, y, COL_RESET_DATA, ROW_RESET_DATA);
-    driver_handle.set_sequence(current_sequence, current_sequence_size, false);
+    driver_handle.set_sequence(current_sequence, spi_sequence_size, false);
 }
 
 void SensorDriver::reset_single_pixel(int x, int y)
@@ -131,7 +131,7 @@ void SensorDriver::reset_single_pixel(int x, int y)
 
     // Generate sequence and apply
     sequence_generator::get_custom_spi_data_signal(current_sequence, x, y, COL_RESET_DATA, ROW_RESET_DATA);
-    driver_handle.set_sequence(current_sequence, current_sequence_size, false);
+    driver_handle.set_sequence(current_sequence, spi_sequence_size, false);
 }
 
 void SensorDriver::read_image(int *buffer, int exposure_time_millis)
@@ -178,7 +178,7 @@ void SensorDriver::read_image_slow(int *buffer, int exposure_time_millis)
 void SensorDriver::read_image_optimized(int *buffer, int exposure_time_millis)
 {
     // Allocate a buffer to store the 4 pixel signals
-    register_size* pixel_sequence = (register_size*)malloc(62*4*sizeof(register_size));
+    register_size* pixel_sequence = (register_size*)malloc(spi_sequence_size*4*sizeof(register_size));
 
     // Loop through the pixels and perform readouts, saving into the buffer
     for (unsigned y = 0; y < 128; y++)
@@ -190,11 +190,11 @@ void SensorDriver::read_image_optimized(int *buffer, int exposure_time_millis)
 
             // Generate the read signal for four pixels
             for (unsigned i = 0; i < 4; i++) {
-                sequence_generator::get_custom_spi_data_signal(pixel_sequence+i*62, x+32*i, y, COL_READ_DATA, ROW_READ_DATA);
+                sequence_generator::get_custom_spi_data_signal(pixel_sequence+i*spi_sequence_size, x+32*i, y, COL_READ_DATA, ROW_READ_DATA);
             }
 
             // The actual readout
-            driver_handle.set_sequence(pixel_sequence, 62*4, false);
+            driver_handle.set_sequence(pixel_sequence, spi_sequence_size*4, false);
 
             // Expose the pixels and read the voltage
             HAL_Delay(exposure_time_millis);
@@ -207,9 +207,9 @@ void SensorDriver::read_image_optimized(int *buffer, int exposure_time_millis)
 
             //Reset the pixels again
             for (unsigned i = 0; i < 4; i++) {
-                sequence_generator::get_custom_spi_data_signal(pixel_sequence + i*62, x+32*i, y, COL_RESET_DATA, ROW_RESET_DATA);
+                sequence_generator::get_custom_spi_data_signal(pixel_sequence + i*spi_sequence_size, x+32*i, y, COL_RESET_DATA, ROW_RESET_DATA);
             }
-            driver_handle.set_sequence(pixel_sequence, 62*4, false);
+            driver_handle.set_sequence(pixel_sequence, spi_sequence_size*4, false);
 
             buffer++;
         }
