@@ -23,7 +23,7 @@ SPI_Driver spi_driver;
 std::array<register_size, 62> seq;
 std::array<register_size, 62> reset_seq;
 const int image_size = 128;
-SensorDriver sensor_driver(spi_driver, A0, A1, A2, A3, false);
+SensorDriver sensor_driver(spi_driver, A0, A1, A2, A3, true, false);
 
 
 // Set up the interrupt handler and hardware timer
@@ -83,25 +83,23 @@ void setup()
 
   // Initialize the sensor driver
   sensor_driver.initialize_sensor();
-  sensor_driver.calibrate_readout(0, 0);
+  sensor_driver.calibrate_readout(120, 120);
 
   reset_level = sensor_driver.calibration_level;
 
   HAL_Delay(100);
 
   // Read a full image
-  sensor_driver.reset_sensor();
-  sensor_driver.read_image(image_buffer, EXPOSURE_TIME_MILLIS);
+  // sensor_driver.reset_sensor();
+  // sensor_driver.read_image(image_buffer, EXPOSURE_TIME_MILLIS);
 
   // Read a single pixel
-  // sensor_driver.reset_single_pixel(10, 10);
-  // HAL_Delay(100);
-  // sensor_driver.read_single_pixel(10, 10, &pixel_buffer, EXPOSURE_TIME_MILLIS);
+  sensor_driver.reset_single_pixel(120, 120);
+  HAL_Delay(100);
+  sensor_driver.read_single_pixel(120, 120, &pixel_buffer, EXPOSURE_TIME_MILLIS);
 
   // Ensure that the driver is finished before proceeding
-  while (spi_driver.has_sequence()) {
-    HAL_Delay(1);
-  }
+  while (spi_driver.has_sequence()) {}
 }
 
 void loop()
