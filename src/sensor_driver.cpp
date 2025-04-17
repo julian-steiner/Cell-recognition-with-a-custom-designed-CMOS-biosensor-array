@@ -136,7 +136,7 @@ void SensorDriver::reset_single_pixel(int x, int y)
 
 void SensorDriver::read_image(int *buffer, int exposure_time_millis)
 {
-    read_image_slow(buffer, exposure_time_millis);
+    read_image_optimized(buffer, exposure_time_millis);
 }
 
 uint8_t SensorDriver::analog_pin_map(int x, int y)
@@ -159,7 +159,7 @@ uint8_t SensorDriver::analog_pin_map(int x, int y)
 void SensorDriver::read_image_slow(int *buffer, int exposure_time_millis)
 {
     // Handle debug mode for faster debugging
-    int upper_bound = 128;
+    unsigned upper_bound = 128;
     if (debug_mode)
     {
         upper_bound = debug_mode_limit;
@@ -177,4 +177,45 @@ void SensorDriver::read_image_slow(int *buffer, int exposure_time_millis)
 
 void SensorDriver::read_image_optimized(int *buffer, int exposure_time_millis)
 {
+    // Allocate a buffer to store the 4 pixel signals
+    register_size* pixel_sequence = (register_size*)malloc(62*4*sizeof(register_size));
+
+    // Loop through the pixels and perform readouts, saving into the buffer
+    for (unsigned y = 0; y < 128; y++)
+    {
+        for (unsigned x = 0; x < 32; x++)
+        {
+            // Wait for the reset to finish
+            while (driver_handle.has_sequence()) {}
+
+            // Generate the read signal for four pixels
+            for (unsigned i = 0; i < 4; i++) {
+                sequence_generator::get_custom_spi_data_signal(pixel_sequence+i*62, x+32*i, y, COL_READ_DATA, ROW_READ_DATA);
+            }
+
+            // The actual readout
+            driver_handle.set_sequence(pixel_sequence, 62*4, false);
+
+            // Expose the pixels and read the voltage
+            HAL_Delay(exposure_time_millis);
+
+            for (unsigned i = 0; i < 4; i++) {
+                *(buffer+32*i) = calibration_level - analogRead(analog_pin_map(x+32*i, y));
+            }
+
+            while (driver_handle.has_sequence()) {}
+
+            //Reset the pixels again
+            for (unsigned i = 0; i < 4; i++) {
+                sequence_generator::get_custom_spi_data_signal(pixel_sequence + i*62, x+32*i, y, COL_RESET_DATA, ROW_RESET_DATA);
+            }
+            driver_handle.set_sequence(pixel_sequence, 62*4, false);
+
+            buffer++;
+        }
+        buffer = buffer-32+128;
+    }
+
+    while (driver_handle.has_sequence()) {}
+    free(pixel_sequence);
 }

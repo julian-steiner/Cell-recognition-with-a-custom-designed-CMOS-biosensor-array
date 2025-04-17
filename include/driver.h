@@ -18,7 +18,7 @@ private:
     const register_size *current_bit_ptr;
     int current_index;
     int array_len;
-    bool __has_sequence;
+    volatile bool __has_sequence;
     bool repeat;
 
 public:

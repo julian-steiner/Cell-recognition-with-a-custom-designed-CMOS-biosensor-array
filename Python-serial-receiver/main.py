@@ -48,10 +48,9 @@ while True:
 # Normalize the image
 print(f'The measured reset level is : {reset_level}')
 
-img = img * (1/reset_level) * 255
 ser.close()
 
-plt.imshow(img, cmap='gray', vmin=0, vmax=255)
+plt.imshow(img, cmap='gray', vmin=0, vmax=reset_level)
 plt.savefig("readout1.png")
 plt.show()
 

@@ -91,7 +91,7 @@ void setup()
 
   // Read a full image
   sensor_driver.reset_sensor();
-  // sensor_driver.read_image(image_buffer, EXPOSURE_TIME_MILLIS);
+  sensor_driver.read_image(image_buffer, EXPOSURE_TIME_MILLIS);
 
   // Read a single pixel
   // sensor_driver.reset_single_pixel(120, 120);
