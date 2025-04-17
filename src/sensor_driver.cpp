@@ -19,28 +19,30 @@ SensorDriver::SensorDriver(SPI_Driver &driver_handle, uint8_t pin_1, uint8_t pin
     pinMode(pin_4, INPUT);
     analogReadResolution(16);
 
+    current_sequence = (register_size*)malloc(62*sizeof(register_size));
+    current_sequence_size = 62;
+
     // Initialize the signals
     if (exp)
     {
         ROW_RESET_DATA = sequence_generator::ROW_RESET_DATA_EXP;
-        ROW_READ_PREPARE_DATA = sequence_generator::ROW_READ_PREPARE_DATA_EXP;
         ROW_READ_DATA = sequence_generator::ROW_READ_DATA_EXP;
         ROW_CALIBRATE_DATA = sequence_generator::ROW_CALIBRATE_DATA_EXP;
         COL_RESET_DATA = sequence_generator::COL_RESET_DATA_EXP;
-        COL_READ_PREPARE_DATA = sequence_generator::COL_READ_PREPARE_DATA_EXP;
         COL_READ_DATA = sequence_generator::COL_READ_DATA_EXP;
         COL_CALIBRATE_DATA = sequence_generator::COL_CALIBRATE_DATA_EXP;
     } else {
         ROW_RESET_DATA = sequence_generator::ROW_RESET_DATA_EXN;
-        ROW_READ_PREPARE_DATA = sequence_generator::ROW_READ_PREPARE_DATA_EXN;
         ROW_READ_DATA = sequence_generator::ROW_READ_DATA_EXN;
         ROW_CALIBRATE_DATA = sequence_generator::ROW_CALIBRATE_DATA_EXN;
         COL_RESET_DATA = sequence_generator::COL_RESET_DATA_EXN;
-        COL_READ_PREPARE_DATA = sequence_generator::COL_READ_PREPARE_DATA_EXN;
         COL_READ_DATA = sequence_generator::COL_READ_DATA_EXN;
         COL_CALIBRATE_DATA = sequence_generator::COL_CALIBRATE_DATA_EXN;
-
     }
+}
+
+SensorDriver::~SensorDriver() {
+    free(current_sequence);
 }
 
 void SensorDriver::initialize_sensor()
@@ -59,8 +61,8 @@ void SensorDriver::calibrate_readout(int x, int y)
     while (driver_handle.has_sequence()){}
 
     // Set the pixel into the calibrate state
-    current_sequence = sequence_generator::get_custom_spi_data_signal(x, y, COL_CALIBRATE_DATA, ROW_CALIBRATE_DATA);
-    driver_handle.set_sequence(current_sequence.data(), current_sequence.size(), false);
+    sequence_generator::get_custom_spi_data_signal(current_sequence, x, y, COL_CALIBRATE_DATA, ROW_CALIBRATE_DATA);
+    driver_handle.set_sequence(current_sequence, current_sequence_size, false);
     HAL_Delay(100);
 
     // Extract the calibration level
@@ -88,8 +90,8 @@ void SensorDriver::reset_sensor()
             }
 
             // Generate sequence and apply
-            current_sequence = sequence_generator::get_custom_spi_data_signal(x, y, COL_RESET_DATA, ROW_RESET_DATA);
-            driver_handle.set_sequence(current_sequence.data(), current_sequence.size(), false);
+            sequence_generator::get_custom_spi_data_signal(current_sequence, x, y, COL_RESET_DATA, ROW_RESET_DATA);
+            driver_handle.set_sequence(current_sequence, current_sequence_size, false);
         }
     }
 }
@@ -100,16 +102,16 @@ void SensorDriver::read_single_pixel(int x, int y, int *buffer, int exposure_tim
     while (driver_handle.has_sequence()) {}
 
     // The actual readout
-    current_sequence = sequence_generator::get_custom_spi_data_signal(x, y, COL_READ_DATA, ROW_READ_DATA);
-    driver_handle.set_sequence(current_sequence.data(), current_sequence.size(), false);
+    sequence_generator::get_custom_spi_data_signal(current_sequence, x, y, COL_READ_DATA, ROW_READ_DATA);
+    driver_handle.set_sequence(current_sequence, current_sequence_size, false);
 
     // Expose the pixel and read the voltage
     HAL_Delay(exposure_time_millis);
     *buffer = calibration_level - analogRead(analog_pin_map(x, y));
 
     // Reset the pixel again
-    current_sequence = sequence_generator::get_custom_spi_data_signal(x, y, COL_RESET_DATA, ROW_RESET_DATA);
-    driver_handle.set_sequence(current_sequence.data(), current_sequence.size(), false);
+    sequence_generator::get_custom_spi_data_signal(current_sequence, x, y, COL_RESET_DATA, ROW_RESET_DATA);
+    driver_handle.set_sequence(current_sequence, current_sequence_size, false);
 }
 
 void SensorDriver::reset_single_pixel(int x, int y)
@@ -118,11 +120,33 @@ void SensorDriver::reset_single_pixel(int x, int y)
     while (driver_handle.has_sequence()){}
 
     // Generate sequence and apply
-    current_sequence = sequence_generator::get_custom_spi_data_signal(x, y, COL_RESET_DATA, ROW_RESET_DATA);
-    driver_handle.set_sequence(current_sequence.data(), current_sequence.size(), false);
+    sequence_generator::get_custom_spi_data_signal(current_sequence, x, y, COL_RESET_DATA, ROW_RESET_DATA);
+    driver_handle.set_sequence(current_sequence, current_sequence_size, false);
 }
 
 void SensorDriver::read_image(int *buffer, int exposure_time_millis)
+{
+    read_image_slow(buffer, exposure_time_millis);
+}
+
+uint8_t SensorDriver::analog_pin_map(int x, int y)
+{
+    if (x < 32)
+    {
+        return pin_1;
+    }
+    if (x < 64)
+    {
+        return pin_2;
+    }
+    if (x < 96)
+    {
+        return pin_3;
+    }
+    return pin_4;
+}
+
+void SensorDriver::read_image_slow(int *buffer, int exposure_time_millis)
 {
     // Handle debug mode for faster debugging
     int upper_bound = 128;
@@ -141,19 +165,6 @@ void SensorDriver::read_image(int *buffer, int exposure_time_millis)
     }
 }
 
-uint8_t SensorDriver::analog_pin_map(int x, int y)
+void SensorDriver::read_image_optimized(int *buffer, int exposure_time_millis)
 {
-    if (x < 32)
-    {
-        return pin_1;
-    }
-    if (x < 64)
-    {
-        return pin_2;
-    }
-    if (x < 96)
-    {
-        return pin_3;
-    }
-    return pin_4;
 }

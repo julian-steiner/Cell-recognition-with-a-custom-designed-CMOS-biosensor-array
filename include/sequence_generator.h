@@ -60,24 +60,18 @@ namespace sequence_generator
      * @tparam T the type of the entries to the SPI sequence
      * @tparam sequence_size size of the spi sequence
      * @tparam data_size size of the data to be inserted
-     * @param sequence sequence to insert the data
-     * @param start_index index where the data insertion starts
+     * @param sequence pointer in the sequence where to insert the data
      * @param data_row data for the column pin
      * @param data_col data for the row pin
      */
-    template <typename T, size_t sequence_size, size_t data_size>
-    void write_data_to_custom_spi_sequence(std::array<T, sequence_size> &sequence, const unsigned &start_index, const std::bitset<data_size> &data_row, const std::bitset<data_size> &data_col)
+    template <typename T, size_t data_size>
+    void write_data_to_custom_spi_sequence(T* sequence, const std::bitset<data_size> &data_row, const std::bitset<data_size> &data_col)
     {
-        if (sequence_size - start_index < 2 * data_size)
-        {
-            throw std::out_of_range("Sequence buffer too small");
-        }
-
         // Write data to custom SPI sequence
         for (unsigned i = 0; i < data_size; i++)
         {
-            sequence.at(start_index + 2 * i) = data_row[i] * DATA_ROW_PIN | data_col[i] * DATA_COL_PIN | CLK_PIN;
-            sequence.at(start_index + 2 * i + 1) = data_row[i] * DATA_ROW_PIN | data_col[i] * DATA_COL_PIN;
+            *(sequence++) = data_row[i] * DATA_ROW_PIN | data_col[i] * DATA_COL_PIN | CLK_PIN;
+            *(sequence++) = data_row[i] * DATA_ROW_PIN | data_col[i] * DATA_COL_PIN;
         }
     }
 
@@ -85,24 +79,16 @@ namespace sequence_generator
      * @brief Writes a sequence into another SPI sequence
      *
      * @tparam T the type of the spi sequence elements
-     * @tparam old_sequence_size The size of the sequence where the new sequence is inserted
-     * @tparam new_sequence_size The size of the new sequence
      * @param old_sequence
-     * @param start_index the index at which the insertion starts
      * @param new_sequence
      */
-    template <typename T, size_t old_sequence_size, size_t new_sequence_size>
-    void write_sequence_to_custom_spi_sequence(std::array<T, old_sequence_size> &old_sequence, const unsigned &start_index, const std::array<T, new_sequence_size> &new_sequence)
+    template <typename T>
+    void write_sequence_to_custom_spi_sequence(T* old_sequence, const T* new_sequence, size_t new_sequence_size)
     {
-        if (old_sequence_size - start_index < new_sequence_size)
-        {
-            throw std::out_of_range("Sequence buffer too small");
-        }
-
         // Write data to custom SPI sequence
         for (unsigned i = 0; i < new_sequence_size; i++)
         {
-            old_sequence.at(start_index + i) = new_sequence.at(i);
+            *(old_sequence++) = *(new_sequence++);
         }
     }
 
@@ -115,6 +101,6 @@ namespace sequence_generator
      * @param row_data The data to send to the row (read, reset)
      * @return const std::array<register_size, 62>
      */
-    std::array<register_size, 62> get_custom_spi_data_signal(const u_int8_t col_addr, const u_int8_t row_addr, const u_int8_t col_data, const u_int8_t row_data);
+    void get_custom_spi_data_signal(register_size* buffer, u_int8_t col_addr, const u_int8_t row_addr, const u_int8_t col_data, const u_int8_t row_data);
 
 }
