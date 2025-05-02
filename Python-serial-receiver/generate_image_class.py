@@ -13,7 +13,7 @@ class GenerateImage:
         self.port = port
         self.baudrate = baudrate
         self.image_size = image_size
-        self.reset_level = 65535
+        self.reset_level = 0
         self.img = np.zeros((image_size, image_size), dtype=int)
         self.ser = serial.Serial(port, baudrate)
 
@@ -51,7 +51,12 @@ class GenerateImage:
                     data = np.array(self.parse_line(line))
                     row_data = np.array(data[0,:-1], dtype=int)
 
-                    self.dark_frame_array[line_num, ...] = row_data
+                    #self.dark_frame_array[line_num, ...] = row_data
+
+                    #dark frame averager
+                    #TODO: Counter to know how many dark frame images made.
+                    for i in range(row_data):
+                        self.dark_frame_array[line_num, i] = (row_data + self.dark_frame_array[line_num, i])/2
 
                     line_num += 1
                 break
@@ -76,6 +81,11 @@ class GenerateImage:
 
                     corrected = np.clip(row_data - self.dark_frame_array[line_num], 0, 65535)
                     self.img[line_num, :] = corrected.astype(int)
+
+                    #Determines the reset level. Very inefficient so far.
+                    for pixel_value in self.img[line_num, :]:
+                        if pixel_value>self.reset_level:
+                            self.reset_level = pixel_value
 
                     line_num += 1
                 break
