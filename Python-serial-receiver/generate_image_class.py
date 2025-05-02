@@ -5,19 +5,22 @@ import numpy as np
 import csv
 import os
 
+#TODO: do dark frame, file-save and array subtraction inside c++ for efficiency and only read_image inside python?
+# Type int not ideal for image generation, uint16 was out of bounds?
+
 class GenerateImage:
     def __init__(self, port='/dev/ttyACM0', baudrate=9600, image_size=128):
         self.port = port
         self.baudrate = baudrate
         self.image_size = image_size
-        self.reset_level = 0
-        self.img = np.zeros((image_size, image_size), dtype=np.uint16)
+        self.reset_level = 65535
+        self.img = np.zeros((image_size, image_size), dtype=int)
         self.ser = serial.Serial(port, baudrate)
 
         if os.path.exists("dark_frame.npy"):
             self.dark_frame_array = np.load("dark_frame.npy")
         else:
-            self.dark_frame_array = np.zeros((image_size, image_size), dtype=np.uint16)
+            self.dark_frame_array = np.zeros((image_size, image_size), dtype=int)
 
     def open_connection(self):
         if self.ser.is_open:
@@ -46,14 +49,14 @@ class GenerateImage:
                     if line == b'END_DATA\n':
                         break
                     data = np.array(self.parse_line(line))
-                    row_data = np.array(data[0,:-1], dtype=np.uint16)
+                    row_data = np.array(data[0,:-1], dtype=int)
 
                     self.dark_frame_array[line_num, ...] = row_data
-                    np.save("dark_frame.npy", self.dark_frame_array)
 
                     line_num += 1
                 break
         self.close_connection()
+        np.save("dark_frame.npy", self.dark_frame_array)
 
     def read_image(self):
         self.open_connection()
@@ -69,10 +72,10 @@ class GenerateImage:
                     if line == b'END_DATA\n':
                         break
                     data = np.array(self.parse_line(line))
-                    row_data = np.array(data[0,:-1], dtype=np.uint16)
+                    row_data = np.array(data[0,:-1], dtype=int)
 
                     corrected = np.clip(row_data - self.dark_frame_array[line_num], 0, 65535)
-                    self.img[line_num, :] = corrected.astype(np.uint16)
+                    self.img[line_num, :] = corrected.astype(int)
 
                     line_num += 1
                 break
