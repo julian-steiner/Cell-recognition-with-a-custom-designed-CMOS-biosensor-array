@@ -25,7 +25,6 @@ std::array<register_size, 62> reset_seq;
 const int image_size = 128;
 SensorDriver sensor_driver(spi_driver, A0, A1, A2, A3, true, false);
 
-
 // Set up the interrupt handler and hardware timer
 static TIM_HandleTypeDef htim3;
 
