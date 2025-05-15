@@ -1,8 +1,9 @@
 from generate_image_class import GenerateImage
+from time import sleep
 
 #Important: First, make a turn with dark_image(). This will save a dark_frame array as dark_frame.npy file. After that, you can start with read_image.
 # Per default, dark_frame_array is set to only zeros.
-image_reader = GenerateImage()
+image_reader = GenerateImage(port='/dev/ttyACM0')
 
 
 #for cleaning dead pixels:
@@ -34,12 +35,17 @@ elif mode==2:
     print("Done.")
 
 elif mode==3:
-    image_reader.read_image()
-    #image_reader.clean_dead_pixels()
-    #image_reader.show_image()
+    image_reader.read_image(load=False)
     image_reader.apply_flat_field_correction()
+    # image_reader.clean_dead_pixels()
     image_reader.show_image()
+    image_reader.save_image()
     print("Done.")
+
+while (image_reader.ser.is_open):
+    print("force closing serial")
+    image_reader.ser.close()
+
 
 '''#Dark Frame
 if mode==0:
