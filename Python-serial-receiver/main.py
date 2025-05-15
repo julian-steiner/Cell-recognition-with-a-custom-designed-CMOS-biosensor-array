@@ -4,14 +4,16 @@ from generate_image_class import GenerateImage
 # Per default, dark_frame_array is set to only zeros.
 image_reader = GenerateImage()
 
-#average or single Dark Frame?
-add_to_average = True
 
 #for cleaning dead pixels:
-kernel_size = 5, thresh_fraction = 0.85
+kernel_size = 5
+thresh_fraction = 0.85
 
 #for edge detection:
-gaussian_kernel=(5, 5), sigma=1.0, low_thresh=200, high_thresh=250
+gaussian_kernel=(5, 5)
+sigma=1.0
+low_thresh=200
+high_thresh=250
 
 mode = int(input(   "DarkFrame = 0,\n"
                     "Unprocessed ImageRead = 1,\n"
@@ -19,7 +21,27 @@ mode = int(input(   "DarkFrame = 0,\n"
                     "Processed ImageRead + EdgeCanny = 3.\n"))
 print("Mode:", mode)
 
-#Dark Frame
+if mode==0:
+    image_reader.dark_frame()
+    print("Done.")
+
+elif mode==1:
+    image_reader.light_frame()
+    print("Done.")
+
+elif mode==2:
+    #image_reader.gain_calibration()
+    print("Done.")
+
+elif mode==3:
+    image_reader.read_image()
+    #image_reader.clean_dead_pixels()
+    #image_reader.show_image()
+    image_reader.apply_flat_field_correction()
+    image_reader.show_image()
+    print("Done.")
+
+'''#Dark Frame
 if mode==0:
     print("Creating Dark Fram Image...")
     image_reader.dark_frame(add_to_average)
@@ -47,4 +69,4 @@ elif mode==3:
     image_reader.clean_dead_pixels(kernel_size, thresh_fraction)
     image_reader.edge_detection(gaussian_kernel, sigma, low_thresh, high_thresh)
     print("Done.")
-    image_reader.show_image()
+    image_reader.show_image()'''

@@ -10,19 +10,22 @@ import cv2
 # Type int not ideal for image generation, uint16 was out of bounds?
 
 class GenerateImage:
-    def __init__(self, port='/dev/cu.usbmodem14301', baudrate=9600, image_size=128):
+    def __init__(self, port='COM3', baudrate=9600, image_size=128):
         self.port = port
         self.baudrate = baudrate
         self.image_size = image_size
-        self.reset_level = 0
-        self.reset_level_array = np.zeros(image_size, dtype=int)
-        self.img = np.zeros((image_size, image_size), dtype=int)
+        self.img = np.zeros((image_size, image_size), dtype=float)
         self.ser = serial.Serial(port, baudrate)
 
-        if os.path.exists("dark_frame_average.npy"):
-            self.dark_frame_array = np.load("dark_frame_average.npy")
+        if os.path.exists("dark_frame.npy"):
+            self.dark_frame_array = np.load("dark_frame.npy")
         else:
-            self.dark_frame_array = np.zeros((image_size, image_size), dtype=int)
+            self.dark_frame_array = np.zeros((image_size, image_size), dtype=float)
+
+        if os.path.exists("light_frame.npy"):
+            self.light_frame_array = np.load("light_frame.npy")
+        else:
+            self.light_frame_array = np.zeros((image_size, image_size), dtype=float)
 
     def open_connection(self):
         if self.ser.is_open:
@@ -56,14 +59,7 @@ class GenerateImage:
         plt.axis('off')
         plt.show()
 
-
-        # Display the edges
-        plt.imshow(edges, cmap='gray')
-        plt.title('Canny Edge Detection')
-        plt.axis('off')
-        plt.show()
-
-    def dark_frame(self, add_to_average=True):
+    def dark_frame(self):
         self.open_connection()
         while True:
             line = self.ser.readline()
@@ -76,30 +72,49 @@ class GenerateImage:
                     if line == b'END_DATA\n':
                         break
                     data = np.array(self.parse_line(line))
-                    row_data = np.array(data[0,:-1], dtype=int)
+                    row_data = np.array(data[0,:-1], dtype=float)
 
                     #dark frame averager
                     #TODO: Counter to know how many dark frame images made.
-                    if add_to_average:
-                        self.dark_frame_array[line_num, :] = (row_data + self.dark_frame_array[line_num, :])/2
-                    else:
-                        self.dark_frame_array[line_num, :] = row_data
+                    self.dark_frame_array[line_num, :] = row_data
 
                     line_num += 1
                 break
         self.close_connection()
+        np.save("dark_frame.npy", self.dark_frame_array)
 
-        if add_to_average:
-            np.save("dark_frame_average.npy", self.dark_frame_array)
-        else:
-            np.save("dark_frame_single.npy", self.dark_frame_array)
+    def light_frame(self):
+        self.open_connection()
+        while True:
+            line = self.ser.readline()
+            if line == b'BEGIN_DATA\n':
+                print("Received image")
+                line_num = 0
+                line = self.ser.readline()
+                data = self.parse_line(line)
+                while True:
+                    line = self.ser.readline()
+                    if line == b'END_DATA\n':
+                        break
+                    data = np.array(self.parse_line(line))
+                    row_data = np.array(data[0,:-1], dtype=float)
 
+                    #dark frame averager
+                    #TODO: Counter to know how many dark frame images made.
+                    self.light_frame_array[line_num, :] = row_data
+
+                    line_num += 1
+                break
+        self.close_connection()
+        print("Saving image")
+        np.save("light_frame.npy", self.light_frame_array)
 
     def read_image(self):
         self.open_connection()
         while True:
             line = self.ser.readline()
             if line == b'BEGIN_DATA\n':
+                print("Received image")
                 line_num = 0
                 line = self.ser.readline()
                 data = self.parse_line(line)
@@ -109,28 +124,24 @@ class GenerateImage:
                     if line == b'END_DATA\n':
                         break
                     data = np.array(self.parse_line(line))
-                    row_data = np.array(data[0,:-1], dtype=int)
+                    row_data = np.array(data[0,:-1], dtype=float)
 
-                    corrected = np.clip(row_data - self.dark_frame_array[line_num], 0, 65535)
-                    self.img[line_num, :] = corrected.astype(int)
-
-                    #Determines the reset level. Very inefficient so far.
-                    # for pixel_value in self.img[line_num, :]:
-                    #     if pixel_value>self.reset_level:
-                    #         self.reset_level = pixel_value
-
-                    self.reset_level_array[line_num] = max(self.img[line_num, :])
+                    # Store the corrected row in the image array
+                    self.img[line_num, :] = row_data
 
                     line_num += 1
                 break
         self.close_connection()
-        self.reset_level = self.reset_level_array.min()
 
+    def apply_flat_field_correction(self):
+        self.img = (self.img - self.dark_frame_array)/(self.light_frame_array - self.dark_frame_array)
+        self.img *= 65535.0
 
     def show_image(self):
-        plt.imshow(self.img, cmap='gray', vmin=0, vmax=self.reset_level)
+        print(self.img)
+        plt.imshow(self.img, cmap='gray', vmin=0, vmax=65535)
         plt.show()
 
     def save_image(self, filename="readout.png"):
-        plt.imshow(self.img, cmap='gray', vmin=0, vmax=self.reset_level)
+        plt.imshow(self.img, cmap='gray', vmin=0, vmax=65535)
         plt.savefig(filename)
