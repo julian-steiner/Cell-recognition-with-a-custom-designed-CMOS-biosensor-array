@@ -16,7 +16,7 @@
 // 200KHz setting
 const int HTIM3_PRESCALER = 29;
 const int HTIM3_PERIOD = 5;
-const int EXPOSURE_TIME_MILLIS = 5;
+const int EXPOSURE_TIME_MILLIS = 10;
   
 // Declarations
 SPI_Driver spi_driver;
