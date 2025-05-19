@@ -19,7 +19,7 @@ high_thresh=250
 mode = int(input(   "DarkFrame = 0,\n"
                     "Unprocessed ImageRead = 1,\n"
                     "Processed ImageRead = 2,\n"
-                    "Processed ImageRead + EdgeCanny = 3.\n"))
+                    "Full pipeline (subtract+threshold+blur+area) = 3\n"))
 print("Mode:", mode)
 
 if mode==0:
@@ -35,11 +35,16 @@ elif mode==2:
     print("Done.")
 
 elif mode==3:
-    image_reader.read_image(load=False)
-    image_reader.apply_flat_field_correction()
-    # image_reader.clean_dead_pixels()
+    image_reader.read_image(load=True)
+    # image_reader.show_image()
+    # image_reader.apply_flat_field_correction()
+    image_reader.subtract_calibration_image()
+    # image_reader.show_image()
+    image_reader.save_image('readout_subtracted')
+    image_reader.clean_dead_pixels()
+    image_reader.component_analysis()
     image_reader.show_image()
-    image_reader.save_image()
+    image_reader.save_image('readout_subtracted_blurred')
     print("Done.")
 
 while (image_reader.ser.is_open):

@@ -43,23 +43,49 @@ class GenerateImage:
          return [line for line in reader]
     
     def clean_dead_pixels(self, kernel_size=5, thresh_fraction=0.85):
-        high = 2**16-1
-        self.img = np.minimum(self.img, high)
-        thresh = int(high * thresh_fraction)
-        mask   = (self.img >= thresh)
-        img_u16 = self.img.astype(np.uint16)
-        med_u16 = cv2.medianBlur(img_u16, kernel_size)
-        self.img[mask] = med_u16[mask].astype(self.img.dtype)
+        self.img = cv2.GaussianBlur(self.img, (kernel_size, kernel_size), 0)
+        # self.img = np.minimum(self.img, high)
+        # thresh = int(high * thresh_fraction)
+        # mask   = (self.img >= thresh)
+        # img_u16 = self.img.astype(np.uint16)
+        # med_u16 = cv2.medianBlur(img_u16, kernel_size)
+        # lf.img[mask] = med_u16[mask].astype(self.img.dtype)
 
 
-    def edge_detection(self, gaussian_kernel=(5, 5), sigma=1.0, low_thresh=200, high_thresh=250):
-        img8 = (self.img.astype(np.float32) / self.reset_level * 255.0).clip(0,255).astype(np.uint8)
+    def edge_detection(self, gaussian_kernel=(5, 5), sigma=1.0, low_thresh=150, high_thresh=250):
+        img8 = (self.img.astype(np.float32) / 65535 * 255.0).clip(0,255).astype(np.uint8)
         blurred = cv2.GaussianBlur(img8, gaussian_kernel, sigma)
         edges = cv2.Canny(blurred, low_thresh, high_thresh)
         plt.figure()
         plt.imshow(edges, cmap='gray')
         plt.axis('off')
         plt.show()
+
+    def component_analysis(self):
+        # 3. Find Connected Components
+        # Use cv2.CC_STAT_AREA and cv2.CC_STAT_BBOX to get area and bounding box
+        self.img = self.img * 255 / 65535
+        _, thresh = cv2.threshold(self.img.astype('uint8'),0,65535,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+        num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(thresh, 8, cv2.CV_32S)
+
+        # 4. and 5. Analyze and Filter Components
+        # Create a black image to draw the filtered components
+        output_img = np.zeros_like(self.img)
+
+        # Iterate through each component (skip the background component at index 0)
+        for i in range(1, num_labels):
+            area = stats[i, 4] # CC_STAT_AREA
+
+            # Define filtering criteria
+            # These values will need to be tuned based on the size and shape of your cells
+            min_cell_area = 2  # Minimum area for a component to be considered a cell
+
+            # Check if the component meets the criteria for a cell
+            if min_cell_area < area:
+                # If it's a cell, draw it on the output image
+                output_img[labels == i] = 255
+        
+        self.img = output_img / 255 * 65535
 
     def dark_frame(self):
         self.open_connection()
@@ -159,23 +185,13 @@ class GenerateImage:
                     break
             self.close_connection()
 
-        plt.imshow(self.img, cmap='gray', vmin=0, vmax=reset_level)
-        plt.show()
+        # self.img = self.img * 65535 / reset_level
+        # plt.imshow(self.img, cmap='gray', vmin=0, vmax=reset_level)
+        # plt.show()
 
         np.save("image.npy", self.img)
 
     def apply_flat_field_correction(self):
-        # plt.imshow(self.light_frame_array, cmap='gray', vmin=0, vmax=13000)
-        # # plt.savefig("lightframe.png")
-        # # plt.show()
-        # plt.imshow(self.dark_frame_array, cmap='gray', vmin=0, vmax=13000)
-        plt.imshow(self.light_frame_array-self.dark_frame_array, cmap='gray', vmin=0, vmax=13000)
-        plt.imshow(self.dark_frame_array, cmap='gray', vmin=0, vmax=13000)
-        # plt.savefig("darkframe.png")
-        # plt.show()
-        plt.imshow(self.img, cmap='gray', vmin=0, vmax=13000)
-        # plt.show()
-
         for y in range(128):
             for x in range(128):
                 if (self.light_frame_array[y, x] - self.dark_frame_array[y, x] == 0):
@@ -185,8 +201,14 @@ class GenerateImage:
                 self.img[y, x] = (self.img[y, x] - self.dark_frame_array[y, x])/(self.light_frame_array[y, x] - self.dark_frame_array[y, x])
 
         # print(self.img)
-        self.img *= np.median((self.light_frame_array-self.dark_frame_array).flatten())*3
+        self.img *= np.median((self.light_frame_array-self.dark_frame_array).flatten())*3.5
         print(self.img)
+
+    def subtract_calibration_image(self):
+        self.img = self.light_frame_array - self.img
+        self.img *= 15
+        self.img = np.clip(self.img, 0, 65535)
+
 
     def show_image(self):
         plt.imshow(self.img, cmap='gray', vmin=0, vmax=65535)
