@@ -15,7 +15,7 @@ class GenerateImage:
         self.baudrate = baudrate
         self.image_size = image_size
         self.img = np.zeros((image_size, image_size), dtype=float)
-        self.ser = serial.Serial(port, baudrate)
+        # self.ser = serial.Serial(port, baudrate)
 
         if os.path.exists("dark_frame.npy"):
             self.dark_frame_array = np.load("dark_frame.npy")
@@ -65,7 +65,7 @@ class GenerateImage:
         # 3. Find Connected Components
         # Use cv2.CC_STAT_AREA and cv2.CC_STAT_BBOX to get area and bounding box
         self.img = self.img * 255 / 65535
-        _, thresh = cv2.threshold(self.img.astype('uint8'),0,65535,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+        _, thresh = cv2.threshold(self.img.astype('uint8'),100,255,cv2.THRESH_BINARY)
         num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(thresh, 8, cv2.CV_32S)
 
         # 4. and 5. Analyze and Filter Components
@@ -78,10 +78,10 @@ class GenerateImage:
 
             # Define filtering criteria
             # These values will need to be tuned based on the size and shape of your cells
-            min_cell_area = 2  # Minimum area for a component to be considered a cell
+            min_cell_area = 0  # Minimum area for a component to be considered a cell
 
             # Check if the component meets the criteria for a cell
-            if min_cell_area < area:
+            if min_cell_area < area :
                 # If it's a cell, draw it on the output image
                 output_img[labels == i] = 255
         
@@ -198,11 +198,13 @@ class GenerateImage:
                     print("Encountered zero")
                     continue
 
-                self.img[y, x] = (self.img[y, x] - self.dark_frame_array[y, x])/(self.light_frame_array[y, x] - self.dark_frame_array[y, x])
+                self.dark_frame_array = np.clip(self.dark_frame_array, a_min=0, a_max=6000)
+                self.img[y, x] = (self.img[y, x] - self.dark_frame_array[y, x])/(np.max(self.img)/np.max(self.light_frame_array)*self.light_frame_array[y, x] - self.dark_frame_array[y, x])
 
+        # print(np.max(self.img)/np.max(self.light_frame_array))
         # print(self.img)
-        self.img *= np.median((self.light_frame_array-self.dark_frame_array).flatten())*3.5
-        print(self.img)
+        self.img *= np.median((self.light_frame_array-self.dark_frame_array).flatten())*5.25
+        # print(self.img)
 
     def subtract_calibration_image(self):
         self.img = self.light_frame_array - self.img
@@ -216,4 +218,4 @@ class GenerateImage:
 
     def save_image(self, filename="readout.png"):
         plt.imshow(self.img, cmap='gray', vmin=0, vmax=65535)
-        plt.savefig(filename)
+        plt.savefig(filename, dpi=300)

@@ -19,7 +19,7 @@ high_thresh=250
 mode = int(input(   "DarkFrame = 0,\n"
                     "Unprocessed ImageRead = 1,\n"
                     "Processed ImageRead = 2,\n"
-                    "Full pipeline (subtract+threshold+blur+area) = 3\n"))
+                    "Full pipeline (light frame subtraction) = 3\n"))
 print("Mode:", mode)
 
 if mode==0:
@@ -31,25 +31,21 @@ elif mode==1:
     print("Done.")
 
 elif mode==2:
-    #image_reader.gain_calibration()
-    print("Done.")
-
-elif mode==3:
-    image_reader.read_image(load=True)
+    image_reader.read_image(load=False)
     # image_reader.show_image()
     # image_reader.apply_flat_field_correction()
     image_reader.subtract_calibration_image()
     # image_reader.show_image()
-    image_reader.save_image('readout_subtracted')
-    image_reader.clean_dead_pixels()
-    image_reader.component_analysis()
+    # image_reader.save_image('readout_subtracted')
+    # image_reader.clean_dead_pixels()
+    # image_reader.component_analysis()
     image_reader.show_image()
-    image_reader.save_image('readout_subtracted_blurred')
+    image_reader.save_image('readout-pixel-detection')
     print("Done.")
 
-while (image_reader.ser.is_open):
-    print("force closing serial")
-    image_reader.ser.close()
+# while (image_reader.ser.is_open):
+#     print("force closing serial")
+#     image_reader.ser.close()
 
 
 '''#Dark Frame
