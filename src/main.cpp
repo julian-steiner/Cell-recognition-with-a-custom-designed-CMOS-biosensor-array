@@ -101,6 +101,8 @@ void setup()
   while (spi_driver.has_sequence()) {}
 }
 
+// Serial output of the image
+
 void loop()
 {
   digitalWrite(86, HIGH);
